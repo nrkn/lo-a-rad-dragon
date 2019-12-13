@@ -13,6 +13,14 @@ const data = [
   {
     name: 'ShieldSprite',
     src: './data/shield.png'
+  },
+  {
+    name: 'BeerSprite',
+    src: './data/beer.png'
+  },
+  {
+    name: 'HealSprite',
+    src: './data/heal.png'
   }
 ]
 

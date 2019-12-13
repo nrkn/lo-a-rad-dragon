@@ -22,8 +22,14 @@ Random          byte
 PLAYER_HEIGHT = 8
 SWORD_HEIGHT = 8
 SHIELD_HEIGHT = 8
+BEER_HEIGHT = 8
+HEAL_HEIGHT = 8
+
 WEAPON_Y = 20
 ARMOR_Y = 30
+INN_Y = 40
+HEALER_Y = 50
+
 
 ; ------------------------------------------------------------------------------
 ; Setup rom
@@ -48,16 +54,6 @@ Start:
 StartFrame:
 
 ; ------------------------------------------------------------------------------
-; Calculations run before VBLANK
-; ------------------------------------------------------------------------------
-  lda PlayerX
-  ldy #0
-  jsr SetObjectXPos         ; set player0 x position
-
-  sta WSYNC
-  sta HMOVE                 ; apply the horizontal offets we just set
-
-; ------------------------------------------------------------------------------
 ; Init VSYNC and VBLANK
 ; ------------------------------------------------------------------------------
 
@@ -73,10 +69,20 @@ StartFrame:
   sta VSYNC                 ; turn off VSYNC
 
 ; ------------------------------------------------------------------------------
-; 37 lines of VBLANK
+; Calculations run before VBLANK
+; ------------------------------------------------------------------------------
+  lda PlayerX
+  ldy #0
+  jsr SetObjectXPos         ; set player0 x position
+
+  sta WSYNC
+  sta HMOVE                 ; apply the horizontal offets we just set
+
+; ------------------------------------------------------------------------------
+; 37 lines of VBLANK minus 2 used above
 ; ------------------------------------------------------------------------------
 
-  ldx #37
+  ldx #35
 LoopVBlank:
   sta WSYNC
   dex
@@ -92,7 +98,7 @@ LoopVBlank:
 ; ------------------------------------------------------------------------------
 ; 2-line kernel
 ; ------------------------------------------------------------------------------
-  lda #$02                  ; background
+  lda #$c6                  ; background
   sta COLUBK
 
   ldx #96                   ; scanline counter
@@ -111,6 +117,39 @@ LoopVBlank:
   sta GRP0
   lda PlayerColors,Y
   sta COLUP0
+  sta WSYNC
+
+.IsHealerHut:
+  txa
+  sec
+  sbc HEALER_Y
+  cmp HEAL_HEIGHT
+  bcc .DrawHealerHut
+  jmp .IsInnHut
+
+.DrawHealerHut:
+  tay
+  lda HealSprite,Y
+  sta GRP1
+  lda HealColors,Y
+  sta COLUP1
+  jmp .DrawHutsDone
+
+.IsInnHut:
+  txa
+  sec
+  sbc INN_Y
+  cmp BEER_HEIGHT
+  bcc .DrawInnHut
+  jmp .IsWeaponHut
+
+.DrawInnHut:
+  tay
+  lda BeerSprite,Y
+  sta GRP1
+  lda BeerColors,Y
+  sta COLUP1
+  jmp .DrawHutsDone
 
 .IsWeaponHut:
   txa
@@ -144,10 +183,8 @@ LoopVBlank:
   sta COLUP1
 
 .DrawHutsDone
-
+  sta WSYNC
   dex
-  sta WSYNC
-  sta WSYNC
   bne .EachLine
 
 ; ------------------------------------------------------------------------------
@@ -227,15 +264,6 @@ SetObjectXPos subroutine
   rts
 
 ; ------------------------------------------------------------------------------
-; Game over
-; ------------------------------------------------------------------------------
-GameOver subroutine
-  lda #$30
-  sta COLUBK                ; set background red if game over
-
-  rts
-
-; ------------------------------------------------------------------------------
 ; Random using Linear-Feedback Shift Register
 ; - Generate random number using LFSR
 ; ------------------------------------------------------------------------------
@@ -281,17 +309,37 @@ SwordSprite:
 ShieldSprite:
   .byte #%00000000
   .byte #%00111000
-  .byte #%01000100
-  .byte #%01000100
-  .byte #%01000100
+  .byte #%01111100
+  .byte #%01111100
+  .byte #%01111100
   .byte #%01111100
   .byte #%01010100
   .byte #%00000000
 
+BeerSprite:
+  .byte #%00000000
+  .byte #%11111000
+  .byte #%10101100
+  .byte #%10101010
+  .byte #%10101010
+  .byte #%10101010
+  .byte #%11111100
+  .byte #%11111000
+
+HealSprite:
+  .byte #%00000000
+  .byte #%00110000
+  .byte #%00110000
+  .byte #%11111100
+  .byte #%11111100
+  .byte #%00110000
+  .byte #%00110000
+  .byte #%00000000
+
 PlayerColors:
-  .byte $1c
-  .byte $1c
-  .byte $1c
+  .byte $00
+  .byte $96
+  .byte $96
   .byte $1c
   .byte $1c
   .byte $1c
@@ -299,24 +347,44 @@ PlayerColors:
   .byte $1c
 
 SwordColors:
-  .byte $1c
-  .byte $1c
-  .byte $1c
-  .byte $1c
-  .byte $1c
-  .byte $1c
-  .byte $1c
-  .byte $1c
+  .byte $00
+  .byte $06
+  .byte $0a
+  .byte $0e
+  .byte $0e
+  .byte $0e
+  .byte $0e
+  .byte $0e
 
 ShieldColors:
-  .byte $1c
-  .byte $1c
-  .byte $1c
-  .byte $1c
-  .byte $1c
-  .byte $1c
-  .byte $1c
-  .byte $1c
+  .byte $00
+  .byte $06
+  .byte $08
+  .byte $08
+  .byte $08
+  .byte $08
+  .byte $0a
+  .byte $00
+
+BeerColors:
+  .byte $00
+  .byte $1e
+  .byte $1e
+  .byte $1e
+  .byte $1e
+  .byte $1e
+  .byte $1e
+  .byte $0e
+
+HealColors:
+  .byte $00
+  .byte $36
+  .byte $36
+  .byte $36
+  .byte $38
+  .byte $38
+  .byte $38
+  .byte $00
 
 ; ------------------------------------------------------------------------------
 ; Fill ROM to exactly 4kb
