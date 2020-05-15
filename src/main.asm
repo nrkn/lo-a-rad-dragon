@@ -371,9 +371,9 @@ BeerColors:
   .byte $1e
   .byte $1e
   .byte $1e
-  .byte $1e
-  .byte $1e
-  .byte $1e
+  .byte $1f
+  .byte $1f
+  .byte $1f
   .byte $0e
 
 HealColors:
